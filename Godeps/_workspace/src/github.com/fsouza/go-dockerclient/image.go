@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"time"
+        "github.com/dwake/docker-trust"
 )
 
 // APIImages represent an image returned in the ListImages call.
@@ -281,6 +282,16 @@ type PullImageOptions struct {
 //
 // See https://goo.gl/iJkZjD for more details.
 func (c *Client) PullImage(opts PullImageOptions, auth AuthConfiguration) error {
+        if trust.ShouldUseContentTrust(opts.Tag) {        
+             digest, err := trust.GetTrustedDigestToPull(opts.Repository, opts.Tag,
+                                                        auth.Username, auth.Password,
+                                                        auth.Email, auth.ServerAddress)
+             if err != nil {
+                 return err
+             }
+             opts.Tag = digest             
+        }
+                
 	if opts.Repository == "" {
 		return ErrNoSuchImage
 	}
