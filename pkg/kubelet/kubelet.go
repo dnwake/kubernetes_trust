@@ -1231,7 +1231,13 @@ func makeMounts(pod *api.Pod, podDir string, container *api.Container, hostName,
 	// - container is not a infrastructure(pause) container
 	// - container is not already mounting on /etc/hosts
 	// When the pause container is being created, its IP is still unknown. Hence, PodIP will not have been set.
-	mountEtcHostsFile := (pod.Spec.SecurityContext == nil || !pod.Spec.SecurityContext.HostNetwork) && len(podIP) > 0
+
+	// HACK:  To avoid error where /etc/hosts gets mounted to a directory,
+	//  force it to not be mounted.
+	mountEtcHostsFile := false 
+	// mountEtcHostsFile := (pod.Spec.SecurityContext == nil || !pod.Spec.SecurityContext.HostNetwork) && len(podIP) > 0
+
+
 	glog.V(3).Infof("container: %v/%v/%v podIP: %q creating hosts mount: %v", pod.Namespace, pod.Name, container.Name, podIP, mountEtcHostsFile)
 	mounts := []kubecontainer.Mount{}
 	for _, mount := range container.VolumeMounts {
