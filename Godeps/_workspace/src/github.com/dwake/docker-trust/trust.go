@@ -16,7 +16,7 @@ import (
         "github.com/dwake/docker-trust/external/github.com/docker/distribution/digest"
         "github.com/dwake/docker-trust/external/github.com/docker/distribution/registry/client/auth"
         "github.com/dwake/docker-trust/external/github.com/docker/distribution/registry/client/transport"
-	"github.com/dwake/docker-trust/external/github.com/docker/docker/api/client"
+	"github.com/dwake/docker-trust/external/github.com/docker/docker/api/client/trust"
 	"github.com/dwake/docker-trust/external/github.com/docker/docker/cliconfig"
 	"github.com/dwake/docker-trust/external/github.com/docker/docker/reference"
 	"github.com/dwake/docker-trust/external/github.com/docker/docker/registry"
