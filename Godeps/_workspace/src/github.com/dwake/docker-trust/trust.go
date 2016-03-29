@@ -16,6 +16,7 @@ import (
         "github.com/dwake/docker-trust/external/github.com/docker/distribution/digest"
         "github.com/dwake/docker-trust/external/github.com/docker/distribution/registry/client/auth"
         "github.com/dwake/docker-trust/external/github.com/docker/distribution/registry/client/transport"
+	"github.com/dwake/docker-trust/external/github.com/docker/docker/api/client"
 	"github.com/dwake/docker-trust/external/github.com/docker/docker/cliconfig"
 	"github.com/dwake/docker-trust/external/github.com/docker/docker/reference"
 	"github.com/dwake/docker-trust/external/github.com/docker/docker/registry"
@@ -35,6 +36,7 @@ import (
 	"time"
 )
 
+// derived from addTrustedFlags() and 
 func ShouldUseContentTrust(tag string) (bool) {
 	var trusted bool
 	if e := os.Getenv("DOCKER_CONTENT_TRUST"); e != "" {
@@ -52,6 +54,7 @@ func ShouldUseContentTrust(tag string) (bool) {
 /// This method returns only one digest, while the original method (trustedPull())
 ///  could pull multiple digests if no tag is specified
 ///
+/// I don't think this can be delegated b/c original method actually performs the pull
 func GetTrustedDigestToPull(repository string, tag string, 
                             username string, password string, 
                             email string, serverAddress string) (string, error) {
@@ -87,23 +90,9 @@ func GetTrustedDigestToPull(repository string, tag string,
 	return digest.NewDigestFromHex("sha256", hex.EncodeToString(h)).String(), nil
 }
 
-func trustServer(index *registrytypes.IndexInfo) (string, error) {
-	if s := os.Getenv("DOCKER_CONTENT_TRUST_SERVER"); s != "" {
-		urlObj, err := url.Parse(s)
-		if err != nil || urlObj.Scheme != "https" {
-			return "", fmt.Errorf("valid https URL required for trust server, got %s", s)
-		}
-
-		return s, nil
-	}
-	if index.Official {
-		return registry.NotaryServer, nil
-	}
-	return "https://" + index.Name, nil
-}
-
+// identical except original made references to CLI in last line
 func getNotaryRepository(repoInfo *registry.RepositoryInfo, authConfig types.AuthConfig) (*client.NotaryRepository, error) {
-	server, err := trustServer(repoInfo.Index)
+	server, err := client.trustServer(repoInfo.Index)
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +163,7 @@ func getNotaryRepository(repoInfo *registry.RepositoryInfo, authConfig types.Aut
 	return client.NewNotaryRepository(trustDirectory, repoInfo.FullName(), server, tr, passphraseRetriever)
 }
 
+// identical
 func certificateDirectory(server string) (string, error) {
 	u, err := url.Parse(server)
 	if err != nil {
@@ -183,14 +173,17 @@ func certificateDirectory(server string) (string, error) {
 	return filepath.Join(cliconfig.ConfigDir(), "tls", u.Host), nil
 }
 
+// identical
 type simpleCredentialStore struct {
 	auth types.AuthConfig
 }
 
+// identical
 func (scs simpleCredentialStore) Basic(u *url.URL) (string, string) {
      return scs.auth.Username, scs.auth.Password
 }
 
+// faking out cli.getPassphraseRetriever()
 func getPassphraseRetriever() (passphrase.Retriever){
 	env := map[string]string{
 		"root":             os.Getenv("DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE"),
